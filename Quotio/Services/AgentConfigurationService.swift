@@ -1324,9 +1324,17 @@ actor AgentConfigurationService {
                 // If no Copilot accounts, still show the model (user might add account later)
             }
 
+            // Add provider prefix for Copilot models (matching gemini-/kiro- alias pattern)
+            let modelId: String
+            if provider == "github-copilot" {
+                modelId = "github-copilot-" + item.id
+            } else {
+                modelId = item.id
+            }
+
             return AvailableModel(
-                id: item.id,
-                name: item.id,
+                id: modelId,
+                name: modelId,
                 provider: provider,
                 isDefault: false
             )

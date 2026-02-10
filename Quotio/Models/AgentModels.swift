@@ -259,6 +259,11 @@ nonisolated struct AvailableModel: Identifiable, Codable, Hashable, Sendable {
         AvailableModel(id: "gpt-5-codex", name: "gpt-5-codex", provider: "openai", isDefault: false),
         AvailableModel(id: "gpt-5-codex-mini", name: "gpt-5-codex-mini", provider: "openai", isDefault: false),
         AvailableModel(id: "gpt-oss-120b-medium", name: "gpt-oss-120b-medium", provider: "openai", isDefault: false),
+        // GitHub Copilot models
+        AvailableModel(id: "github-copilot-claude-sonnet-4-5", name: "github-copilot-claude-sonnet-4-5", provider: "github-copilot", isDefault: false),
+        AvailableModel(id: "github-copilot-claude-opus-4-6-thinking", name: "github-copilot-claude-opus-4-6-thinking", provider: "github-copilot", isDefault: false),
+        AvailableModel(id: "github-copilot-gpt-4o", name: "github-copilot-gpt-4o", provider: "github-copilot", isDefault: false),
+        AvailableModel(id: "github-copilot-o3-pro", name: "github-copilot-o3-pro", provider: "github-copilot", isDefault: false),
     ]
 }
 

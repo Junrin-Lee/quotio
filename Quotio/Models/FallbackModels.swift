@@ -27,7 +27,15 @@ enum ModelType: String, Codable, Sendable, CaseIterable {
 
     /// Detect model type from model name
     static func detect(from modelName: String) -> ModelType {
-        let lower = modelName.lowercased()
+        // Strip known provider prefixes to get the actual model family
+        var lower = modelName.lowercased()
+        let knownPrefixes = ["gemini-", "kiro-", "github-copilot-"]
+        for prefix in knownPrefixes {
+            if lower.hasPrefix(prefix) {
+                lower = String(lower.dropFirst(prefix.count))
+                break
+            }
+        }
 
         // Claude family
         let claudeKeywords = ["claude", "opus", "sonnet", "haiku"]

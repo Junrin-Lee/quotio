@@ -445,6 +445,10 @@ final class ProxyBridge {
                 resolvedBody = body
             }
 
+            // Strip github-copilot- prefix from model before forwarding to CLIProxyAPI
+            // (CLIProxyAPI doesn't recognize this Quotio-added prefix)
+            let finalBody = self.stripCopilotModelPrefix(resolvedBody)
+
             let targetPortValue = self.targetPort
             let targetHostValue = self.targetHost
 
@@ -453,7 +457,7 @@ final class ProxyBridge {
                 path: path,
                 version: httpVersion,
                 headers: headers,
-                body: resolvedBody,
+                body: finalBody,
                 originalConnection: connection,
                 connectionId: connectionId,
                 startTime: startTime,
@@ -547,6 +551,19 @@ final class ProxyBridge {
         return newBody
     }
 
+    /// Strip "github-copilot-" prefix from model field in request body.
+    /// Quotio adds this prefix for UI disambiguation, but CLIProxyAPI needs the original upstream model ID.
+    private nonisolated func stripCopilotModelPrefix(_ body: String) -> String {
+        guard let bodyData = body.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: bodyData) as? [String: Any],
+              let model = json["model"] as? String,
+              model.hasPrefix("github-copilot-") else {
+            return body
+        }
+        let strippedModel = String(model.dropFirst("github-copilot-".count))
+        return replaceModelInBody(body, with: strippedModel)
+    }
+
     private nonisolated func sanitizeThinkingBlocks(_ body: String, targetModelId: String) -> String {
         guard let bodyData = body.data(using: .utf8),
               var json = try? JSONSerialization.jsonObject(with: bodyData) as? [String: Any],
@@ -633,7 +650,10 @@ final class ProxyBridge {
             
             // Infer provider from model name if not already detected
             if provider == nil {
-                if FallbackFormatConverter.isClaudeModel(modelValue) {
+                // Copilot prefix detection first (before isClaudeModel catches github-copilot-claude-*)
+                if modelValue.hasPrefix("github-copilot-") {
+                    provider = "copilot"
+                } else if FallbackFormatConverter.isClaudeModel(modelValue) {
                     provider = "claude"
                 } else if modelValue.hasPrefix("gemini") || modelValue.hasPrefix("models/gemini") {
                     provider = "gemini"
@@ -819,7 +839,9 @@ final class ProxyBridge {
 
                     if isSignatureError && !fallbackContext.triedSanitization,
                        let currentEntry = fallbackContext.currentEntry {
-                        let sanitizedBody = self.sanitizeThinkingBlocks(fallbackContext.originalBody, targetModelId: currentEntry.modelId)
+                        let sanitizedBody = self.stripCopilotModelPrefix(
+                            self.sanitizeThinkingBlocks(fallbackContext.originalBody, targetModelId: currentEntry.modelId)
+                        )
 
                         if sanitizedBody != fallbackContext.originalBody {
                             targetConnection.cancel()
@@ -872,7 +894,9 @@ final class ProxyBridge {
                             )
                         }
 
-                        let nextBody = self.replaceModelInBody(fallbackContext.originalBody, with: nextEntry.modelId)
+                        let nextBody = self.stripCopilotModelPrefix(
+                            self.replaceModelInBody(fallbackContext.originalBody, with: nextEntry.modelId)
+                        )
 
                         self.forwardRequest(
                             method: method,
@@ -988,7 +1012,7 @@ final class ProxyBridge {
         let resolvedProvider: String? = fallbackContext.currentEntry?.provider.rawValue
 
         let finalReason: FallbackTriggerReason?
-        if let statusCode = statusCode, !(200..<300).contains(statusCode) {
+        if let statusCode = capturedStatusCode, !(200..<300).contains(statusCode) {
             finalReason = fallbackReason(responseData: responseData) ?? .httpStatus(statusCode)
         } else {
             finalReason = nil
