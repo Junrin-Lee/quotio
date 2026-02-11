@@ -833,9 +833,9 @@ private struct ModelSlotRow: View {
         if !selectedModel.isEmpty && availableModels.contains(where: { $0.name == selectedModel }) {
             return selectedModel
         }
-        // 向后兼容：尝试添加 github-copilot- 前缀匹配旧配置
+        // Backward compatibility: try matching with github-copilot- prefix for old configs
         if !selectedModel.isEmpty {
-            let prefixedName = "github-copilot-" + selectedModel
+            let prefixedName = FallbackEntry.copilotModelPrefix + selectedModel
             if availableModels.contains(where: { $0.name == prefixedName }) {
                 return prefixedName
             }

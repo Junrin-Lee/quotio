@@ -28,8 +28,8 @@ enum ModelType: String, Codable, Sendable, CaseIterable {
     /// Detect model type from model name
     static func detect(from modelName: String) -> ModelType {
         // Strip known provider prefixes to get the actual model family
+        let knownPrefixes = ["gemini-", "kiro-", FallbackEntry.copilotModelPrefix]
         var lower = modelName.lowercased()
-        let knownPrefixes = ["gemini-", "kiro-", "github-copilot-"]
         for prefix in knownPrefixes {
             if lower.hasPrefix(prefix) {
                 lower = String(lower.dropFirst(prefix.count))
@@ -79,12 +79,14 @@ struct FallbackEntry: Codable, Identifiable, Hashable, Sendable {
         self.priority = priority
     }
 
-    /// 有效的 model ID（确保 Copilot 模型始终带 github-copilot- 前缀）
-    /// 旧版本存储的 modelId 无前缀，新版本已带前缀，此属性统一二者
+    /// Prefix added to Copilot model IDs for UI disambiguation
+    nonisolated static let copilotModelPrefix = "github-copilot-"
+
+    /// Effective model ID ensuring Copilot models always carry the "github-copilot-" prefix.
+    /// Older versions stored modelId without the prefix; this property normalizes both formats.
     nonisolated var effectiveModelId: String {
-        let prefix = "github-copilot-"
-        if provider == .copilot && !modelId.hasPrefix(prefix) {
-            return prefix + modelId
+        if provider == .copilot && !modelId.hasPrefix(Self.copilotModelPrefix) {
+            return Self.copilotModelPrefix + modelId
         }
         return modelId
     }

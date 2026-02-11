@@ -445,8 +445,7 @@ final class ProxyBridge {
                 resolvedBody = body
             }
 
-            // Strip github-copilot- prefix from model before forwarding to CLIProxyAPI
-            // (CLIProxyAPI doesn't recognize this Quotio-added prefix)
+            // Strip Copilot model prefix before forwarding (CLIProxyAPI doesn't recognize it)
             let finalBody = self.stripCopilotModelPrefix(resolvedBody)
 
             let targetPortValue = self.targetPort
@@ -554,14 +553,19 @@ final class ProxyBridge {
     /// Strip "github-copilot-" prefix from model field in request body.
     /// Quotio adds this prefix for UI disambiguation, but CLIProxyAPI needs the original upstream model ID.
     private nonisolated func stripCopilotModelPrefix(_ body: String) -> String {
+        let prefix = FallbackEntry.copilotModelPrefix
         guard let bodyData = body.data(using: .utf8),
-              let json = try? JSONSerialization.jsonObject(with: bodyData) as? [String: Any],
+              var json = try? JSONSerialization.jsonObject(with: bodyData) as? [String: Any],
               let model = json["model"] as? String,
-              model.hasPrefix("github-copilot-") else {
+              model.hasPrefix(prefix) else {
             return body
         }
-        let strippedModel = String(model.dropFirst("github-copilot-".count))
-        return replaceModelInBody(body, with: strippedModel)
+        json["model"] = String(model.dropFirst(prefix.count))
+        guard let newData = try? JSONSerialization.data(withJSONObject: json, options: [.sortedKeys]),
+              let newBody = String(data: newData, encoding: .utf8) else {
+            return body
+        }
+        return newBody
     }
 
     private nonisolated func sanitizeThinkingBlocks(_ body: String, targetModelId: String) -> String {
@@ -651,7 +655,7 @@ final class ProxyBridge {
             // Infer provider from model name if not already detected
             if provider == nil {
                 // Copilot prefix detection first (before isClaudeModel catches github-copilot-claude-*)
-                if modelValue.hasPrefix("github-copilot-") {
+                if modelValue.hasPrefix(FallbackEntry.copilotModelPrefix) {
                     provider = "copilot"
                 } else if FallbackFormatConverter.isClaudeModel(modelValue) {
                     provider = "claude"

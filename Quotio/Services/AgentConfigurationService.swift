@@ -1325,12 +1325,9 @@ actor AgentConfigurationService {
             }
 
             // Add provider prefix for Copilot models (matching gemini-/kiro- alias pattern)
-            let modelId: String
-            if provider == "github-copilot" {
-                modelId = "github-copilot-" + item.id
-            } else {
-                modelId = item.id
-            }
+            let modelId = provider == "github-copilot"
+                ? FallbackEntry.copilotModelPrefix + item.id
+                : item.id
 
             return AvailableModel(
                 id: modelId,
