@@ -79,9 +79,19 @@ struct FallbackEntry: Codable, Identifiable, Hashable, Sendable {
         self.priority = priority
     }
 
+    /// 有效的 model ID（确保 Copilot 模型始终带 github-copilot- 前缀）
+    /// 旧版本存储的 modelId 无前缀，新版本已带前缀，此属性统一二者
+    nonisolated var effectiveModelId: String {
+        let prefix = "github-copilot-"
+        if provider == .copilot && !modelId.hasPrefix(prefix) {
+            return prefix + modelId
+        }
+        return modelId
+    }
+
     /// Display name for UI
     var displayName: String {
-        "\(provider.displayName) → \(modelId)"
+        "\(provider.displayName) → \(effectiveModelId)"
     }
 }
 

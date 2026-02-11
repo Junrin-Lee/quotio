@@ -499,7 +499,7 @@ struct FallbackEntryRow: View {
                     .fontWeight(.medium)
                     .foregroundStyle(isEnabled ? .primary : .secondary)
 
-                Text(entry.modelId)
+                Text(entry.effectiveModelId)
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                     .lineLimit(1)

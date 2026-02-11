@@ -113,7 +113,7 @@ struct AddFallbackEntrySheet: View {
 
     /// Filter out virtual models, already added entries, and incompatible model types
     private var filteredModels: [AvailableModel] {
-        let existingModelIds = Set(existingEntries.map { $0.modelId })
+        let existingModelIds = Set(existingEntries.map { $0.effectiveModelId })
         return availableModels.filter { model in
             model.provider.lowercased() != "fallback" &&
             !existingModelIds.contains(model.id) &&

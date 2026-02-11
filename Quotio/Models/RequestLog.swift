@@ -50,7 +50,7 @@ nonisolated struct FallbackAttempt: Codable, Hashable, Sendable {
     }
 
     init(entry: FallbackEntry, outcome: FallbackAttemptOutcome, reason: FallbackTriggerReason? = nil) {
-        self.init(provider: entry.provider.displayName, modelId: entry.modelId, outcome: outcome, reason: reason)
+        self.init(provider: entry.provider.displayName, modelId: entry.effectiveModelId, outcome: outcome, reason: reason)
     }
 }
 

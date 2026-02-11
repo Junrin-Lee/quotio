@@ -440,7 +440,7 @@ final class ProxyBridge {
 
             if fallbackContext.hasFallback, let entry = fallbackContext.currentEntry {
                 // Replace model in body with resolved model
-                resolvedBody = self.replaceModelInBody(body, with: entry.modelId)
+                resolvedBody = self.replaceModelInBody(body, with: entry.effectiveModelId)
             } else {
                 resolvedBody = body
             }
@@ -840,7 +840,7 @@ final class ProxyBridge {
                     if isSignatureError && !fallbackContext.triedSanitization,
                        let currentEntry = fallbackContext.currentEntry {
                         let sanitizedBody = self.stripCopilotModelPrefix(
-                            self.sanitizeThinkingBlocks(fallbackContext.originalBody, targetModelId: currentEntry.modelId)
+                            self.sanitizeThinkingBlocks(fallbackContext.originalBody, targetModelId: currentEntry.effectiveModelId)
                         )
 
                         if sanitizedBody != fallbackContext.originalBody {
@@ -895,7 +895,7 @@ final class ProxyBridge {
                         }
 
                         let nextBody = self.stripCopilotModelPrefix(
-                            self.replaceModelInBody(fallbackContext.originalBody, with: nextEntry.modelId)
+                            self.replaceModelInBody(fallbackContext.originalBody, with: nextEntry.effectiveModelId)
                         )
 
                         self.forwardRequest(
